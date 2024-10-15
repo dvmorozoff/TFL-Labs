@@ -93,15 +93,22 @@ for i in range(count_upper):
         matrix_in_mat[i][1] = 0
 count_elems_in_table = count_upper - 1
 counterexample = equivalence(matrix_in_mat)
-for i in range(len(counterexample)):
-    suffixes.append(counterexample[len(counterexample) - i - 1:len(counterexample)])
-    count_suffixes += 1
-previous_count_suf = 1
 while counterexample != 'TRUE':
+    previous_count_suf = count_suffixes
+    for i in range(len(counterexample)):
+        new_suffix = counterexample[len(counterexample) - i - 1:len(counterexample)]
+        check4 = True
+        for k in range(len(suffixes)):
+            if new_suffix == suffixes[k]:
+                check4 = False
+                break
+        if check4:
+            suffixes.append(new_suffix)
+            count_suffixes += 1
     for j in range(previous_count_suf, count_suffixes):
         for i in range(len(upper_prefixes)):
             #for key, value in class_table.items():  # Вывод словаря
-                #print(f'{key}: {value}')
+            #    print(f'{key}: {value}')
 
             word = upper_prefixes[i] + suffixes[j]
             check = membership(word)  # true or False
@@ -167,20 +174,6 @@ while counterexample != 'TRUE':
                 class_table[upper_prefixes[i]].remove(new_word_class)
 
     counterexample = equivalence(matrix_in_mat)
-    if counterexample != 'TRUE':
-        previous_count_suf = count_suffixes
-        for i in range(len(counterexample)):
-            new_suffix = counterexample[len(counterexample) - i - 1:len(counterexample)]
-            check4 = True
-            for k in range(len(suffixes)):
-                if new_suffix == suffixes[k]:
-                    check4 = False
-                    break
-            if check4:
-                suffixes.append(new_suffix)
-                count_suffixes += 1
-    if check4:
-        upper_prefixes
 
 for key, value in class_table.items():  # Вывод словаря
     print(f'{key}: {value}')
