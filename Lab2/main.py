@@ -115,8 +115,8 @@ while counterexample != 'TRUE':
     #Построение продолжения таблицы к. э.
     for number_of_suf in range(previous_count_suf, count_suffixes):
         for number_of_up_pref in range(len(upper_prefixes)):
-            #for key, value in class_table.items():  # Вывод словаря
-            #    print(f'{key}: {value}')
+            for key, value in class_table.items():  # Вывод словаря
+                print(f'{key}: {value}')
             word = upper_prefixes[number_of_up_pref] + suffixes[number_of_suf]
             check_word = membership(word)
             table_row = class_table[upper_prefixes[number_of_up_pref]][0]
@@ -155,9 +155,34 @@ while counterexample != 'TRUE':
                                 else:
                                     matrix_in_mat[count_elems_in_table][1] = 0
                             #Расширение префиксов
-                            for symbol in range(len(alphabet)):
-                                new_prefix = prefix + alphabet[sybmol]
-                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            for symbol in range(1, len(alphabet)):
+                                new_prefix = prefix + alphabet[symbol]
+                                print(alphabet)
+                                print(len(alphabet), new_prefix)
+                                table_row_new_prefix = ''
+                                check_equal_new_pref = True
+                                for suffix_iterator_2 in range(1, len(suffixes)):
+                                    new_word_for_prefix = new_prefix + suffixes[suffix_iterator_2]
+                                    check_new_prefix = membership(new_word_for_prefix)
+                                    if check_new_prefix:
+                                        table_row_new_prefix += 'T'
+                                    else:
+                                        table_row_new_prefix += 'F'
+                                for prefix_iterator in range(len(upper_prefixes)):
+                                    if table_row_new_prefix == class_table[upper_prefixes[prefix_iterator]][0]:
+                                        class_table[upper_prefixes[prefix_iterator]].append(new_prefix)
+                                        check_equal_new_pref = False
+                                if check_equal_new_pref:
+                                    class_table[new_prefix] = [table_row_new_prefix]
+                                    upper_prefixes.append(new_prefix)
+                                    for suffix_iterator in range(number_of_suf + 1):
+                                        count_elems_in_table += 1
+                                        matrix_in_mat.append(['', ''])
+                                        matrix_in_mat[count_elems_in_table][0] = new_prefix + suffixes[suffix_iterator]
+                                        if table_row_new_prefix[suffix_iterator] == 'T':
+                                            matrix_in_mat[count_elems_in_table][1] = 1
+                                        else:
+                                            matrix_in_mat[count_elems_in_table][1] = 0
                         else:
                             class_table[new_word_class].append(prefix)
             else:
@@ -165,11 +190,11 @@ while counterexample != 'TRUE':
                 class_table[upper_prefixes[number_of_up_pref]][0] += 'F'
                 #Аналогичный прогон каждого эл-та из к. э.
                 for number_elem_of_class_ec in range(1, len(class_table[upper_prefixes[number_of_up_pref]])):
-                    new_word = class_table[upper_prefixes[number_of_up_pref]][number_elem_of_class_ec] + suffixes[j]
+                    new_word = class_table[upper_prefixes[number_of_up_pref]][number_elem_of_class_ec] + suffixes[suffix_iterator]
                     prefix = class_table[upper_prefixes[number_of_up_pref]][number_elem_of_class_ec]
                     check_new_word = membership(new_word)
                     count_new_word = 0
-                    if check_new_word != check:
+                    if check_new_word != check_word:
                         if count_new_word == 0:
                             count_new_word = 1
                             class_table[prefix] = [table_row + 'T']
@@ -185,6 +210,33 @@ while counterexample != 'TRUE':
                                     matrix_in_mat[count_elems_in_table][1] = 1
                                 else:
                                     matrix_in_mat[count_elems_in_table][1] = 0
+                            #Расширение префиксов
+                            for symbol in range(1, len(alphabet)):
+                                new_prefix = prefix + alphabet[symbol]
+                                table_row_new_prefix = ''
+                                check_equal_new_pref = True
+                                for suffix_iterator_2 in range(1, len(suffixes)):
+                                    new_word_for_prefix = new_prefix + suffixes[suffix_iterator_2]
+                                    check_new_prefix = membership(new_word_for_prefix)
+                                    if check_new_prefix:
+                                        table_row_new_prefix += 'T'
+                                    else:
+                                        table_row_new_prefix += 'F'
+                                for prefix_iterator in range(len(upper_prefixes)):
+                                    if table_row_new_prefix == class_table[upper_prefixes[prefix_iterator]][0]:
+                                        class_table[upper_prefixes[prefix_iterator]].append(new_prefix)
+                                        check_equal_new_pref = False
+                                if check_equal_new_pref:
+                                    class_table[new_prefix] = [table_row_new_prefix]
+                                    upper_prefixes.append(new_prefix)
+                                    for suffix_iterator in range(number_of_suf + 1):
+                                        count_elems_in_table += 1
+                                        matrix_in_mat.append(['', ''])
+                                        matrix_in_mat[count_elems_in_table][0] = new_prefix + suffixes[suffix_iterator]
+                                        if table_row_new_prefix[suffix_iterator] == 'T':
+                                            matrix_in_mat[count_elems_in_table][1] = 1
+                                        else:
+                                            matrix_in_mat[count_elems_in_table][1] = 0
                         else:
                             class_table[prefix].append(prefix)
             if delete_flag == 1:
