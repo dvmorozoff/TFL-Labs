@@ -6,11 +6,12 @@ def membership(file_name, word):
 def equivalence(file_name, matrix_in_mat):
     #print('Введите TRUE в случае эквивалентности и контрпример в противном:')
     counterexample = file.readline().strip()
+    print('countreexample =', counterexample)
     return counterexample
 
 print('Введите название файла с тестовыми данными с расширением:')
 file_name = input()
-#file_name = 'ab.txt'
+#file_name = '09.txt'
 with open(file_name, 'r') as file:
     e = ''  # Возможность задать epsilon по-разному
     alphabet = []
