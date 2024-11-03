@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+from requests.packages import target
 
 app = Flask(__name__)
 
@@ -16,38 +17,29 @@ def membership(word):
     else:
         return None
 
-def equivalence(class_table, suffixes):
+def equivalence(class_table, suffixes, сounterexamples):
     upper_prefixes = list(class_table.keys())
+    upper_prefixes += сounterexamples
     main_prefixes = ' '.join(upper_prefixes)
     ssuffixes = ' '.join(suffixes)
     table = ''
-    lower_prefixes = ''
-    #print('upper_prefixes:', upper_prefixes)
-    #print('suffixes:', suffixes)
+    non_main_pref = []
+    for key in class_table:
+        non_main_pref.extend(class_table[key][1:])
+    non_main_prefixes = ' '.join(non_main_pref)
     for count_pref in range(len(upper_prefixes)):
         for count_suf in range(len(suffixes)):
             word = upper_prefixes[count_pref] + suffixes[count_suf]
-            #word = word.replace('ε', '')
             check_word = membership(word)
             table = table + ' ' + str(check_word)
-            #print('мемьершип в эквивалентности:')
-            #print(upper_prefixes[count_pref], ':', suffixes[count_suf], ':', check_word)
-    #if main_prefixes == '':
-    #    main_prefixes = ' '
-    #if main_prefixes[0] != 'ε':
     main_prefixes = 'ε' + main_prefixes
     ssuffixes = 'ε' + ssuffixes
-    #print('______________________')
-    #print('suffixes:', ssuffixes)
-    #print('upper prefixes:', main_prefixes)
     if main_prefixes == ssuffixes and ssuffixes == 'ε':
         table = str(membership('ε'))
-    #print(table)
-    #print('low_pref:', lower_prefixes)
     payload = {
         "main_prefixes": main_prefixes,
-        "non_main_prefixes": "",  # Пустой объект
-        "suffixes": ssuffixes,  # Элемент e
+        "non_main_prefixes": "",
+        "suffixes": ssuffixes,
         "table": table
     }
     response = requests.post('http://localhost:8080/checkTable', json=payload)
@@ -75,7 +67,7 @@ def equivalence(class_table, suffixes):
 
 #print('Введите название файла с тестовыми данными с расширением:')
 #file_name = input()
-file_name = '092.txt'
+file_name = '09.txt'
 with open(file_name, 'r') as file:
     #e = 'ε'  # Возможность задать epsilon по-разному
     e = ''
@@ -97,8 +89,6 @@ with open(file_name, 'r') as file:
     count_false = 0
     for number_elem_in_alph in range(len(alphabet)):
         word = alphabet[number_elem_in_alph] + suffixes[0]
-        if word == 'εε':
-            word = 'ε'
         if word != 'ε':
             word = word.replace('ε', '')
         check_word = membership(word)  # true or False
@@ -168,7 +158,8 @@ with open(file_name, 'r') as file:
     upper_prefixes = list(class_table.keys())
     previous_count_suf = 1
     count_elems_in_table = count_upper - 1
-    counterexample = equivalence(class_table, suffixes)
+    сounterexamples = []
+    counterexample = equivalence(class_table, suffixes, сounterexamples)
     while counterexample != 'true':
         #Добавление новых суффиксов
         for suffix_iterator in range(len(counterexample)):
@@ -180,25 +171,35 @@ with open(file_name, 'r') as file:
                     break
             if check_already_add_suf:
                 suffixes.append(new_suffix)
-        new_suffix = counterexample
-        class_table[new_suffix] = ['T']
-
+        for count_pref1 in range(len(upper_prefixes), -1, -1):
+            for count_pref2 in range(count_pref1 + 1, len(upper_prefixes)):
+                key_to_move = upper_prefixes[count_pref1]
+                target_key = upper_prefixes[count_pref2]
+                if key_to_move == prev_counterexample or key_to_move == counterexample:
+                    key_to_move, target_key = target_key, key_to_move
+                if key_to_move in class_table and target_key in class_table:
+                    table_row1 = class_table[key_to_move][0]
+                    table_row2 = class_table[target_key][0]
+                    if table_row1 == table_row2:
+                        class_table[target_key].extend(filter(lambda x: x != class_table[key_to_move][0], class_table[key_to_move]))
+                        class_table[target_key].append(key_to_move)
+                        del class_table[key_to_move]
+                        upper_prefixes = list(class_table.keys())
+                        break
+        print('----------------------')
+        for key, value in class_table.items():  # Вывод словаря
+            print(f'{key}: {value}')
+        print('----------------------')
         #Построение продолжения таблицы к. э.
         for number_of_suf in range(previous_count_suf, len(suffixes)):
             for number_of_up_pref in range(len(upper_prefixes)):
-                if (len(class_table[upper_prefixes[number_of_up_pref]][0]) <= number_of_suf):
-                    #print('----------------------')
-                    #for key, value in class_table.items():  # Вывод словаря
-                    #    print(f'{key}: {value}')
-                    #print('----------------------')
+                if (len(class_table[upper_prefixes[number_of_up_pref]][0]) < number_of_suf):
                     word = upper_prefixes[number_of_up_pref] + suffixes[number_of_suf]
                     word = word.replace('ε', '')
                     check_word = membership(word)
                     count_of_lines += 1
                     print(upper_prefixes[number_of_up_pref], suffixes[number_of_suf], ':', check_word, ':', count_of_lines)
                     table_row = class_table[upper_prefixes[number_of_up_pref]][0]
-                    #Добавление элемента в таблицу для МАТ'а
-                    count_elems_in_table += 1
                     delete_elems = []
                     #2 варианта в зависимости от результата membership
                     if check_word:
@@ -237,7 +238,8 @@ with open(file_name, 'r') as file:
                                             else:
                                                 table_row_new_prefix += 'F'
                                         for prefix_iterator in range(len(upper_prefixes)):
-                                            if (table_row_new_prefix == class_table[upper_prefixes[prefix_iterator]][0]) or (table_row_new_prefix[:-1] == class_table[upper_prefixes[prefix_iterator]][0]):
+                                            if (table_row_new_prefix[:number_of_suf] == class_table[upper_prefixes[prefix_iterator]][0]) or (table_row_new_prefix[:number_of_suf-1] == class_table[upper_prefixes[prefix_iterator]][0]):
+                                            #if (table_row_new_prefix == class_table[upper_prefixes[prefix_iterator]][0]) or (table_row_new_prefix[:-1] == class_table[upper_prefixes[prefix_iterator]][0]):
                                                 class_table[upper_prefixes[prefix_iterator]].append(new_prefix)
                                                 check_equal_new_pref = False
                                         if check_equal_new_pref:
@@ -265,6 +267,7 @@ with open(file_name, 'r') as file:
                                     new_word_class = prefix
                                     delete_elems.append(new_word_class)
                                     upper_prefixes.append(prefix)
+
                                     #Расширение префиксов
                                     for symbol in range(1, len(alphabet)):
                                         new_prefix = prefix + alphabet[symbol]
@@ -281,12 +284,14 @@ with open(file_name, 'r') as file:
                                             else:
                                                 table_row_new_prefix += 'F'
                                         for prefix_iterator in range(len(upper_prefixes)):
-                                            if (table_row_new_prefix == class_table[upper_prefixes[prefix_iterator]][0]) or (table_row_new_prefix[:-1] == class_table[upper_prefixes[prefix_iterator]][0]):
+                                            if (table_row_new_prefix[:number_of_suf] == class_table[upper_prefixes[prefix_iterator]][0]) or (table_row_new_prefix[:number_of_suf - 1] == class_table[upper_prefixes[prefix_iterator]][0]):
+                                            #if (table_row_new_prefix == class_table[upper_prefixes[prefix_iterator]][0]) or (table_row_new_prefix[:-1] == class_table[upper_prefixes[prefix_iterator]][0]):
                                                 class_table[upper_prefixes[prefix_iterator]].append(new_prefix)
                                                 check_equal_new_pref = False
                                         if check_equal_new_pref:
                                             class_table[new_prefix] = [table_row_new_prefix]
                                             upper_prefixes.append(new_prefix)
+
                                 else:
                                     class_table[new_word_class].append(prefix)
                                     delete_elems.append(prefix)
@@ -295,8 +300,23 @@ with open(file_name, 'r') as file:
                     #if delete_flag == 1:
                     #    class_table[upper_prefixes[number_of_up_pref]].remove(new_word_class)
                     #    print('DELETE', new_word_class)
+        table_row = ''
+        #Добавление контрпримера, как префикса
+        for suffix_iterator in range(1, len(suffixes)):
+            new_prefix = counterexample
+            word = new_prefix + suffixes[suffix_iterator]
+            check_word = membership(word)
+            if check_word:
+                table_row += 'T'
+            else:
+                table_row += 'F'
+        class_table[new_prefix] = [table_row]
+        сounterexamples.append(new_prefix)
+
+        upper_prefixes = list(class_table.keys())
         previous_count_suf = len(suffixes)
-        counterexample = equivalence(class_table, suffixes)
+        prev_counterexample = counterexample
+        counterexample = equivalence(class_table, suffixes, сounterexamples)
 
     print('---------------')
     for key, value in class_table.items():  # Вывод словаря (таблицы к. э)
